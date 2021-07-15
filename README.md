@@ -47,18 +47,13 @@ You can use yarn as well as npm. To use yarn, after installing node just run the
 
 ## Install
 
-    $ git clone https://github.com/YOUR_USERNAME/PROJECT_TITLE
-    $ cd PROJECT_TITLE
+    $ git clone https://github.com/raymont-osman/bytesize
+    $ cd bytesize
     $ npm install
 
 ## Configure app
 
-Open `a/nice/path/to/a.file` then edit it with your settings. You will need:
-
-- A setting;
-- Another setting;
-- One more setting;
-
-## Running the project
+Open `input/example.png` with photoshop then create your design.
+Run the project with:
 
     $ npm start
