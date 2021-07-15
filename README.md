@@ -1,6 +1,6 @@
 # Bytesize Image Chopper
 
-A little script by Raymont-Osman Product Design which takes a 150x72 pixel image and converts it to a byte array for display on an LCD screen or NeoPixel matrix. The array is a big list of all the RGB values in the image and this can then be used on a microcontroller such as an ESP32 like the Adafruit Feather. A great many improvements can be made, including adding support for various image sizes and 'packing' the image output better as 32bit integers. It's really super basic at the moment.
+A little script which takes a 150x72 pixel image and converts it to a byte array for display on an LCD screen or NeoPixel matrix. The array is a long list of all the RGB pixels in the image and this can then be used on a microcontroller such as an ESP32 like the Adafruit Feather by reading through the array. The ESP32 is perfect since it has a large amount of flash storage, an AVR arduino microcontroller may be more a challenge. A great many improvements can be made from here, including adding support for various image sizes and 'packing' the image output better as 32bit integers. It's really super basic at the moment.
 
 ---
 
