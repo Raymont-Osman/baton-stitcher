@@ -4,6 +4,9 @@ const fs = require('fs');
 const inquirer = require('inquirer');
 const chalk = require('chalk');
 
+const IMAGE_WIDTH = 150;
+const IMAGE_HEIGHT = 36;
+
 const srcDir = path.join(__dirname, '..', 'input');
 const dstDir = path.join(__dirname, '..', 'output');
 
@@ -29,26 +32,32 @@ async function main() {
   const image = await sharp(path.join(srcDir, src));
 
   // validate the image size
-  const data = await image.metadata();
-  const { width, height } = data;
-  if (width !== 150 || height !== 72) {
-    throw Error(`Image must be exactly 150x72. Input image dimensions: ${width}x${height}`);
+  const metadata = await image.metadata();
+  const { width, height } = metadata;
+  if (width !== IMAGE_WIDTH || height !== IMAGE_HEIGHT) {
+    throw Error(`Image must be exactly ${IMAGE_WIDTH}x${IMAGE_HEIGHT}. Input image dimensions: ${width}x${height}`);
   }
 
-  // Rotate the image and convert to a buffer of bytes
-  const buf = await image.rotate(90).raw().toBuffer({ resolveWithObject: true });
+  /**
+   * Use the sharp library to rotate the image, resize it
+   * and then convert it to a buffer of bytes. Sharp is really doing
+   * the heavy lifting here and making it easy for us!
+   */
+  const { data } = await image.rotate(90).raw().toBuffer({ resolveWithObject: true });
 
-  // Pack the image
-  // @todo pack into a 32bit int
-  const pixels = buf.data.map((p) => p).join(', ');
+  /**
+   * Map the pix as 8bit integers as hexadecimal strings: 0xRR, 0xGG, 0xBB
+   */
+  const pix = [...data].map((d) => {
+    return `0x${d.toString(16).padStart(2, 0)}`;
+  });
 
   // Fill out a template to give us a nice cpp header file to work with.
   const baseName = path.parse(src).name;
-  const template = `
-#ifndef ${baseName.toUpperCase()}_ANIMATION_H
+  const template = `#ifndef ${baseName.toUpperCase()}_ANIMATION_H
 #define ${baseName.toUpperCase()}_ANIMATION_H
 #include <stdint.h>
-uint8_t ${baseName} [] = {${pixels}};
+uint8_t ${baseName}[${pix.length}] = {${pix.join(',')}};
 #endif
 `;
 

@@ -1,12 +1,14 @@
 # Bytesize Image Chopper
 
-A little script which takes a 150x72 pixel image and converts it to a byte array for display on an LCD screen or NeoPixel matrix. The array is a long list of all the RGB pixels in the image and this can then be used on a microcontroller such as an ESP32 like the Adafruit Feather by reading through the array. The ESP32 is perfect since it has a large amount of flash storage, an AVR arduino microcontroller may be more a challenge. A great many improvements can be made from here, including adding support for various image sizes and 'packing' the image output better as 32bit integers. It's really super basic at the moment.
+PNG images use a complex lossless compression algorithm that is tricky to implement on c based microcontroller boards like the Arduino and ESP32 modules due to their limited resources. Bytesize, then, is a little script which takes a 150x72 pixel image and converts it to a byte array for display on an LCD screen or LED strip/matrix. The array is a long list of all the RGB pixels in the image and this can then be used on a microcontroller such as an ESP32 like the Adafruit Feather by iterating over the array. The ESP32 is particularly perfect since it has a large amount of flash storage, an AVR arduino microcontroller may be more a challenge and would only work with smaller images.
+
+A great many improvements can be made from here, it's really super basic at the moment but the principle is that you can draw an image in photoshop and output it as an animation on an LED strip, allowing for an dazzling array of effects without hand coding.
 
 ---
 
 ## Requirements
 
-For development, you will need Node.js and npm installed as a global package. Node has been used for development speed and simplicity.
+To run the script, you will need Node.js and npm installed as a global package. Node has been used for development speed and simplicity.
 
 ### Node
 
