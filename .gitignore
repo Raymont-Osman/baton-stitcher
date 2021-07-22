@@ -6,7 +6,8 @@
 # production
 /build
 /draft
-/output
+/animations
+/input
 
 # misc
 .DS_Store
