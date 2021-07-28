@@ -1,8 +1,8 @@
-# Bytesize Image Chopper
+# Bytesize Image Stitcher
 
-PNG images use a complex lossless compression algorithm that is tricky to implement on c based microcontroller boards like the Arduino and ESP32 modules due to their limited resources. Bytesize, then, is a little script which takes a 150x72 pixel image and converts it to a byte array for display on an LCD screen or LED strip/matrix. The array is a long list of all the RGB pixels in the image and this can then be used on a microcontroller such as an ESP32 like the Adafruit Feather by iterating over the array. The ESP32 is particularly perfect since it has a large amount of flash storage, an AVR arduino microcontroller may be more a challenge and would only work with smaller images.
+Takes a png sequence in the input folder and stitches it into one image in the build folder.
 
-A great many improvements can be made from here, it's really super basic at the moment but the principle is that you can draw an image in photoshop and output it as an animation on an LED strip, allowing for an dazzling array of effects without hand coding.
+The After Effects file is in the after_effects folder, which can be used to create a PNG sequence animation.
 
 ---
 

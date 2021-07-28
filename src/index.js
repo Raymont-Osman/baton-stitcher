@@ -1,79 +1,55 @@
 const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
-const inquirer = require('inquirer');
 const chalk = require('chalk');
+const inquirer = require('inquirer');
 
-const IMAGE_WIDTH = 150;
-const IMAGE_HEIGHT = 72;
+const IMAGE_HEIGHT = 168;
 
 /**
- * Entry point for the script.
- * ByteSize takes an input image and processes it using Sharp
- * so it is an array of RGB bytes. This can then be used on a
- * microcontroller such as an ESP32 like the Adafruit Feather.
+ * Stitch Frames
+ * Takes a folder of image frames and stitches them into one image using Sharp
+ * @param {string} srcDir
  */
-async function convert(folderName) {
-  const srcDir = path.join(__dirname, '..', 'input', folderName);
-  const dstDir = path.join(__dirname, '..', 'animations');
+async function stitchFrames(srcDir) {
+  /**
+   * Setup the src and destination folders within the repository
+   */
+  const dstDir = path.join(__dirname, '..', 'build');
+  /**
+   * Read the directory to get the input images
+   */
+  const srcImages = fs.readdirSync(srcDir).filter((f) => !f.startsWith('.'));
 
-  // Collect some user input about the image
-  // const { dst } = await inquirer.prompt([
-  //   // {
-  //   //   type: 'list',
-  //   //   name: 'src',
-  //   //   message: 'Select an input file',
-  //   //   choices: fs.readdirSync(srcDir).filter((f) => !f.startsWith('.')),
-  //   // },
-  //   {
-  //     type: 'list',
-  //     name: 'dst',
-  //     message: 'Select an output file',
-  //     choices: ['handover', 'sleeping', 'resting', 'sensing', 'active'],
-  //   },
-  // ]);
-
+  /**
+   * Make a base composite png image
+   */
   let img = await sharp({
     create: {
-      width: IMAGE_WIDTH,
+      width: srcImages.length,
       height: IMAGE_HEIGHT,
       channels: 3,
       background: { r: 255, g: 0, b: 0 },
-      // noise: {
-      //   type: 'gaussian',
-      //   mean: 128,
-      //   sigma: 30,
-      // },
     },
   })
     .toFormat('png')
     .toBuffer();
 
+  /**
+   * Iterate through the folder and slap one image next to the other
+   * in a composite image, 1 pixel apart
+   */
   let count = 0;
-  for (const f of fs.readdirSync(srcDir).filter((f) => !f.startsWith('.'))) {
+  for (const f of srcImages) {
     const filename = path.join(srcDir, f);
     console.log(f);
-    const composite = await sharp(filename).resize(1, 72).toBuffer();
+    const composite = await sharp(filename).resize(1, IMAGE_HEIGHT).toBuffer();
     img = await sharp(img)
       .composite([{ input: composite, left: count, top: 0 }])
       .flatten()
       .toBuffer();
     count += 1;
   }
-
-  // validate the image size
-  const metadata = await sharp(img).metadata();
-  const { width, height } = metadata;
-  if (width !== IMAGE_WIDTH || height !== IMAGE_HEIGHT) {
-    throw Error(`Image must be exactly ${IMAGE_WIDTH}x${IMAGE_HEIGHT}. Input image dimensions: ${width}x${height}`);
-  }
-
-  /**
-   * Use the sharp library to rotate the image, resize it
-   * and then convert it to a buffer of bytes. Sharp is really doing
-   * the heavy lifting here and making it easy for us!
-   */
-  const { data } = await sharp(img).flatten().rotate(90).raw().toBuffer({ resolveWithObject: true });
 
   /**
    * Make the output directory if it doesn't exist
@@ -83,50 +59,48 @@ async function convert(folderName) {
   }
 
   /**
-   * Map the pix as 8bit integers as hexadecimal strings: 0xRR, 0xGG, 0xBB
+   * Save the file
    */
-  const pix = [...data].map((d) => {
-    return `0x${d.toString(16).padStart(2, 0)}`;
-  });
-
-  // Fill out a template to give us a nice cpp header file to work with.
-
-  const template = `#ifndef ${folderName.toUpperCase()}_ANIMATION_H
-#define ${folderName.toUpperCase()}_ANIMATION_H
-#include <stdint.h>
-uint8_t ${folderName}[${pix.length}] = {${pix.join(',')}};
-#endif
-`;
-
-  /**
-   * Write the template to a header file.
-   */
-  const dstFileName = `${folderName}.h`;
-  fs.writeFileSync(path.join(dstDir, dstFileName), template);
-  console.log(chalk.greenBright(`Written: ${dstFileName}`));
-
-  const dstPreviewFileName = `${folderName}.png`;
-  await sharp(img).toFile(path.join(dstDir, dstPreviewFileName));
-
-  // Fill out a template to give us a nice cpp header file to work with.
-  // const jsonFileName = `${baseName}.pin`;
-  // const buf = Buffer.from(data);
-  // fs.writeFileSync(path.join(dstDir, jsonFileName), buf, { encoding: 'base64' });
-  // console.log(chalk.greenBright(`Written: ${jsonFileName}`));
-
-  // const f = fs.readFileSync(path.join(dstDir, jsonFileName));
-  // f.map((b) => console.log(b));
+  const dstPreviewFileName = `${path.basename(srcDir)}.png`;
+  await sharp(img).rotate(90).toFile(path.join(dstDir, dstPreviewFileName));
+  console.log(chalk.green(`Completed ${path.basename(srcDir)}\n`));
 }
 
+/**
+ * Prompt the user to ask which animation to convert
+ */
+async function getSourceDirectory() {
+  const srcDir = path.join(__dirname, '..', 'input');
+  /**
+   * Make the input directory if it doesn't exist
+   */
+  if (!fs.existsSync(srcDir)) {
+    fs.mkdirSync(srcDir, { recursive: true });
+  }
+  const { srcFolder } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'srcFolder',
+      message: 'Select an input animation',
+      choices: fs.readdirSync(srcDir).filter((f) => !f.startsWith('.')),
+    },
+  ]);
+  return path.join(srcDir, srcFolder);
+}
+
+/**
+ * Entry point for the script.
+ * ByteSize takes a folder of input image frames from After Effects and stitches it
+ * together using Sharp. It can also output an array of RGB bytes in a header file,
+ * which can then be used on a
+ * microcontroller such as an ESP32 like the Adafruit Feather.
+ */
 async function main() {
-  console.log(chalk.blueBright('ByteSize'));
-  await convert('active');
-  await convert('celebrating');
-  await convert('handover');
-  await convert('resting');
-  await convert('running');
-  await convert('sensing');
-  await convert('sleeping');
+  while (true) {
+    const srcDir = await getSourceDirectory();
+    console.log(srcDir);
+    await stitchFrames(srcDir);
+  }
 }
 
 main().catch((e) => console.error(`${chalk.redBright('✘')} ${chalk.redBright(e.message)}`));
